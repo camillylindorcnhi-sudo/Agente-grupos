@@ -6,6 +6,10 @@ const whatsapp = require('./whatsapp');
 const supabase = require('./supabase');
 const QRCode = require('qrcode');
 const cron = require('node-cron');
+const multer = require('multer');
+const { MessageMedia } = require('whatsapp-web.js');
+
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 16 * 1024 * 1024 } });
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -85,13 +89,13 @@ app.patch('/api/groups/:id/toggle', authenticateToken, async (req, res) => {
 
 // ─── Messages ────────────────────────────────────────────────
 
-app.post('/api/messages', authenticateToken, async (req, res) => {
+app.post('/api/messages', authenticateToken, upload.single('file'), async (req, res) => {
   console.log('Body recebido:', req.body);
   console.log('User:', req.user);
 
   const { group_id, group_name, text, scheduled_time } = req.body;
-  if (!group_id || !text)
-    return res.status(400).json({ error: 'group_id e text são obrigatórios.' });
+  if (!group_id || (!text && !req.file))
+    return res.status(400).json({ error: 'group_id e text (ou arquivo) são obrigatórios.' });
 
   // Envio imediato
   if (!scheduled_time) {
@@ -103,15 +107,21 @@ app.post('/api/messages', authenticateToken, async (req, res) => {
     }
     try {
       const waId = group_id.includes('@') ? group_id : `${group_id}@g.us`;
-      await client.sendMessage(waId, text);
-      console.log(`[MSG] Enviada para ${group_name || group_id}: ${text.slice(0, 60)}`);
+      if (req.file) {
+        const media = new MessageMedia(req.file.mimetype, req.file.buffer.toString('base64'), req.file.originalname);
+        await client.sendMessage(waId, media, { caption: text || undefined });
+        console.log(`[MSG] Mídia enviada para ${group_name || group_id}: ${req.file.originalname}`);
+      } else {
+        await client.sendMessage(waId, text);
+        console.log(`[MSG] Enviada para ${group_name || group_id}: ${text.slice(0, 60)}`);
+      }
     } catch (err) {
       console.error('[MSG] Erro ao enviar mensagem imediata:', err);
       return res.status(500).json({ error: 'Erro ao enviar: ' + err.message });
     }
     const { data, error } = await supabase
       .from('messages')
-      .insert([{ user_id: req.user.id, group_id, text, scheduled_time: null, sent: true }])
+      .insert([{ user_id: req.user.id, group_id, text: text || req.file.originalname, scheduled_time: null, sent: true }])
       .select().single();
     if (error) { console.error('[MSG] Erro Supabase completo:', JSON.stringify(error)); return res.status(500).json({ error: error.message || JSON.stringify(error) }); }
     return res.status(201).json({ message: data });

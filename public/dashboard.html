@@ -280,7 +280,8 @@
 
     .msg-form select,
     .msg-form textarea,
-    .msg-form input[type="datetime-local"] {
+    .msg-form input[type="datetime-local"],
+    .msg-form input[type="file"] {
       width: 100%;
       padding: 10px 14px;
       background: #0d1117;
@@ -443,6 +444,8 @@
         </select>
 
         <textarea id="msg-text" placeholder="Digite a mensagem..."></textarea>
+
+        <input type="file" id="msg-file" accept="image/*,video/*,audio/*" />
 
         <div class="msg-radios">
           <label class="msg-radio-label checked" id="lbl-now">
@@ -693,22 +696,35 @@
       scheduled_time = new Date(dtVal).toISOString();
     }
 
+    const file = document.getElementById('msg-file').files[0];
+
+    if (file && tipo === 'schedule') {
+      return alert('Anexos não são suportados em mensagens agendadas. Remova o arquivo ou escolha "Enviar agora".');
+    }
+
     btn.disabled = true;
     try {
-      const res = await fetch('/api/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + localStorage.getItem('token')
-        },
-        body: JSON.stringify({ group_id: groupId, text, scheduled_time }),
-      });
+      let body, headers;
+      if (file) {
+        const fd = new FormData();
+        fd.append('group_id', groupId);
+        if (text) fd.append('text', text);
+        if (scheduled_time) fd.append('scheduled_time', scheduled_time);
+        fd.append('file', file);
+        body = fd;
+        headers = { 'Authorization': 'Bearer ' + localStorage.getItem('token') };
+      } else {
+        body = JSON.stringify({ group_id: groupId, text, scheduled_time });
+        headers = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token') };
+      }
+      const res = await fetch('/api/messages', { method: 'POST', headers, body });
       const data = await res.json();
       if (!res.ok) {
         alert('Erro: ' + JSON.stringify(data));
       } else {
         alert('Enviado!');
         document.getElementById('msg-text').value = '';
+        document.getElementById('msg-file').value = '';
         loadMessages();
       }
     } finally {
