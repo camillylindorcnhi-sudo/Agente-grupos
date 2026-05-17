@@ -98,6 +98,22 @@
       border-bottom: 1px solid #30363d;
     }
 
+    .section-title.toggleable {
+      cursor: pointer;
+      user-select: none;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .section-title.toggleable:hover { color: #25D366; }
+
+    .section-title.toggleable.collapsed {
+      margin-bottom: 0;
+      padding-bottom: 0;
+      border-bottom: none;
+    }
+
     /* WhatsApp section */
     .wa-disconnected {
       display: flex;
@@ -427,9 +443,13 @@
 
   <!-- Groups -->
   <div class="section">
-    <div class="section-title">Meus Grupos</div>
-    <input type="text" id="search-grupos" placeholder="Buscar grupo..." oninput="filterGroups()" />
-    <div id="groups-content"><div class="loading-text">Carregando grupos...</div></div>
+    <div class="section-title toggleable collapsed" onclick="toggleGrupos()">
+      Meus Grupos <span id="grupos-arrow">▼</span>
+    </div>
+    <div id="grupos-body" style="display:none">
+      <input type="text" id="search-grupos" placeholder="Buscar grupo..." oninput="filterGroups()" />
+      <div id="groups-content"><div class="loading-text">Carregando grupos...</div></div>
+    </div>
   </div>
 
   <!-- Messages -->
@@ -583,6 +603,17 @@
 
   checkWAStatus();
   setInterval(checkWAStatus, 4000);
+
+  // ─── Groups toggle ──────────────────────────────────────────
+  function toggleGrupos() {
+    const body  = document.getElementById('grupos-body');
+    const arrow = document.getElementById('grupos-arrow');
+    const title = document.querySelector('.section-title.toggleable');
+    const isCollapsed = body.style.display === 'none';
+    body.style.display = isCollapsed ? 'block' : 'none';
+    arrow.textContent  = isCollapsed ? '▲' : '▼';
+    title.classList.toggle('collapsed', !isCollapsed);
+  }
 
   // ─── Groups ─────────────────────────────────────────────────
   async function loadGroups() {
