@@ -701,7 +701,7 @@
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ' + localStorage.getItem('token')
         },
-        body: JSON.stringify({ group_id: groupId, text }),
+        body: JSON.stringify({ group_id: groupId, text, scheduled_time }),
       });
       const data = await res.json();
       if (!res.ok) {
