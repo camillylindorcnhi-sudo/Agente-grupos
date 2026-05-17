@@ -109,7 +109,9 @@ app.post('/api/messages', authenticateToken, upload.single('file'), async (req, 
       const waId = group_id.includes('@') ? group_id : `${group_id}@g.us`;
       if (req.file) {
         const media = new MessageMedia(req.file.mimetype, req.file.buffer.toString('base64'), req.file.originalname);
-        await client.sendMessage(waId, media, { caption: text || undefined });
+        const isAudio = req.file.mimetype.startsWith('audio/');
+        const sendOpts = isAudio ? { sendAudioAsVoice: true } : { caption: text || undefined };
+        await client.sendMessage(waId, media, sendOpts);
         console.log(`[MSG] Mídia enviada para ${group_name || group_id}: ${req.file.originalname}`);
       } else {
         await client.sendMessage(waId, text);
