@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Aquecedor — Dashboard</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0d1117;
+      color: #e6edf3;
+      min-height: 100vh;
+    }
+
+    /* Header */
+    header {
+      background: #161b22;
+      border-bottom: 1px solid #30363d;
+      padding: 0 32px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 20px;
+      font-weight: 700;
+      color: #e6edf3;
+    }
+
+    .logo-icon {
+      width: 36px;
+      height: 36px;
+      background: #25D366;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .user-email {
+      color: #8b949e;
+      font-size: 13px;
+    }
+
+    .btn-logout {
+      background: none;
+      border: 1px solid #30363d;
+      color: #c9d1d9;
+      padding: 6px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+    }
+
+    .btn-logout:hover {
+      border-color: #f85149;
+      color: #f85149;
+    }
+
+    /* Main layout */
+    main {
+      max-width: 860px;
+      margin: 36px auto;
+      padding: 0 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+
+    .section {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 28px 32px;
+    }
+
+    .section-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #e6edf3;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #30363d;
+    }
+
+    /* WhatsApp section */
+    .wa-disconnected {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .qr-wrapper {
+      background: #fff;
+      border-radius: 12px;
+      padding: 12px;
+      display: inline-block;
+    }
+
+    #qr-img {
+      width: 220px;
+      height: 220px;
+      display: block;
+      border-radius: 6px;
+    }
+
+    .qr-hint {
+      color: #8b949e;
+      font-size: 13px;
+      text-align: center;
+    }
+
+    .wa-connected {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .wa-phone {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .wa-dot {
+      width: 10px;
+      height: 10px;
+      background: #25D366;
+      border-radius: 50%;
+      box-shadow: 0 0 6px #25D366;
+    }
+
+    .wa-number {
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .wa-label {
+      color: #8b949e;
+      font-size: 12px;
+      margin-top: 2px;
+    }
+
+    .btn-danger {
+      background: none;
+      border: 1px solid #f85149;
+      color: #f85149;
+      padding: 8px 20px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-danger:hover { background: rgba(248,81,73,0.1); }
+
+    .wa-waiting {
+      color: #8b949e;
+      font-size: 14px;
+      text-align: center;
+      padding: 16px 0;
+    }
+
+    #search-grupos {
+      width: 100%;
+      padding: 10px 14px;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      color: #e6edf3;
+      font-size: 14px;
+      outline: none;
+      margin-bottom: 16px;
+      transition: border-color 0.2s;
+    }
+
+    #search-grupos:focus { border-color: #25D366; }
+
+    /* Groups section */
+    .groups-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .group-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 18px;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 10px;
+      transition: border-color 0.2s;
+    }
+
+    .group-item:hover { border-color: #484f58; }
+
+    .group-info { display: flex; flex-direction: column; gap: 3px; }
+
+    .group-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: #e6edf3;
+    }
+
+    .group-meta {
+      font-size: 12px;
+      color: #8b949e;
+    }
+
+    .btn-toggle {
+      padding: 7px 18px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+
+    .btn-toggle:active { transform: scale(0.97); }
+    .btn-toggle:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .btn-toggle.active {
+      background: #1a2e1a;
+      color: #25D366;
+      border: 1px solid #25D366;
+    }
+
+    .btn-toggle.inactive {
+      background: #25D366;
+      color: #0d1117;
+    }
+
+    .groups-empty {
+      color: #8b949e;
+      font-size: 14px;
+      text-align: center;
+      padding: 24px 0;
+    }
+
+    .loading-text {
+      color: #8b949e;
+      font-size: 14px;
+      text-align: center;
+      padding: 20px 0;
+    }
+
+    /* Messages section */
+    .msg-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+
+    @media (max-width: 640px) { .msg-grid { grid-template-columns: 1fr; } }
+
+    .msg-form { display: flex; flex-direction: column; gap: 12px; }
+
+    .msg-form select,
+    .msg-form textarea,
+    .msg-form input[type="datetime-local"] {
+      width: 100%;
+      padding: 10px 14px;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      color: #e6edf3;
+      font-size: 14px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .msg-form select:focus,
+    .msg-form textarea:focus,
+    .msg-form input[type="datetime-local"]:focus { border-color: #25D366; }
+
+    .msg-form select option { background: #161b22; }
+    .msg-form textarea { resize: vertical; min-height: 88px; }
+
+    .msg-radios { display: flex; gap: 8px; }
+
+    .msg-radio-label {
+      flex: 1;
+      text-align: center;
+      padding: 8px 12px;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      color: #8b949e;
+      transition: all 0.2s;
+      user-select: none;
+    }
+
+    .msg-radio-label input[type="radio"] { display: none; }
+    .msg-radio-label.checked { border-color: #25D366; color: #25D366; background: #1a2e1a; }
+
+    .btn-primary {
+      width: 100%;
+      padding: 10px;
+      background: #25D366;
+      color: #0d1117;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-primary:hover { background: #1ebe57; }
+    .btn-primary:disabled { background: #1a7a41; cursor: not-allowed; }
+
+    .msg-list { display: flex; flex-direction: column; gap: 8px; }
+
+    .msg-list-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #8b949e;
+      margin-bottom: 4px;
+    }
+
+    .msg-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: 12px 14px;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 10px;
+    }
+
+    .msg-item-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .msg-group { font-size: 12px; font-weight: 700; color: #25D366; }
+
+    .msg-status {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 20px;
+      white-space: nowrap;
+    }
+
+    .msg-status.aguardando { background: #1f2d1f; color: #3fb950; }
+    .msg-status.enviado    { background: #1f2433; color: #58a6ff; }
+
+    .msg-text {
+      font-size: 13px;
+      color: #c9d1d9;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .msg-item-bottom {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .msg-time { font-size: 11px; color: #8b949e; }
+
+    .btn-cancel {
+      background: none;
+      border: none;
+      color: #484f58;
+      font-size: 11px;
+      cursor: pointer;
+      padding: 0;
+      transition: color 0.2s;
+    }
+
+    .btn-cancel:hover { color: #f85149; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">🔥</div>
+    Aquecedor
+  </div>
+  <div class="header-right">
+    <span class="user-email" id="user-email"></span>
+    <button class="btn-logout" onclick="logout()">Sair</button>
+  </div>
+</header>
+
+<main>
+  <!-- WhatsApp -->
+  <div class="section">
+    <div class="section-title">Conexão WhatsApp</div>
+    <div id="wa-content"><div class="loading-text">Verificando conexão...</div></div>
+  </div>
+
+  <!-- Groups -->
+  <div class="section">
+    <div class="section-title">Meus Grupos</div>
+    <input type="text" id="search-grupos" placeholder="Buscar grupo..." oninput="filterGroups()" />
+    <div id="groups-content"><div class="loading-text">Carregando grupos...</div></div>
+  </div>
+
+  <!-- Messages -->
+  <div class="section">
+    <div class="section-title">Mensagens Programadas</div>
+    <div class="msg-grid">
+
+      <!-- Formulário -->
+      <div class="msg-form">
+        <select id="msg-group">
+          <option value="">Carregando grupos...</option>
+        </select>
+
+        <textarea id="msg-text" placeholder="Digite a mensagem..."></textarea>
+
+        <div class="msg-radios">
+          <label class="msg-radio-label checked" id="lbl-now">
+            <input type="radio" name="msg-tipo" value="now" checked onchange="toggleTipo(this)">
+            Enviar agora
+          </label>
+          <label class="msg-radio-label" id="lbl-schedule">
+            <input type="radio" name="msg-tipo" value="schedule" onchange="toggleTipo(this)">
+            Agendar
+          </label>
+        </div>
+
+        <input type="datetime-local" id="msg-datetime" style="display:none" />
+
+        <button class="btn-primary" id="btn-enviar" onclick="enviarMensagem()">Enviar</button>
+      </div>
+
+      <!-- Lista -->
+      <div>
+        <div class="msg-list-title">Últimas 10 mensagens</div>
+        <div id="messages-content"><div class="loading-text">Carregando...</div></div>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<script>
+  const token = localStorage.getItem('token');
+  if (!token) window.location.href = '/login.html';
+
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  document.getElementById('user-email').textContent = user.email || '';
+
+  function authFetch(url, opts = {}) {
+    return fetch(url, {
+      ...opts,
+      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', ...(opts.headers || {}) }
+    });
+  }
+
+  function logout() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    window.location.href = '/login.html';
+  }
+
+  // ─── WhatsApp ───────────────────────────────────────────────
+  let qrInterval = null;
+
+  async function updateQR() {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    try {
+      const res = await fetch('/api/whatsapp/qr', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const img = document.getElementById('qr-img');
+        if (img) {
+          img.src = url;
+          img.style.display = 'block';
+        }
+      }
+    } catch(e) {}
+  }
+
+  function renderWADisconnected() {
+    document.getElementById('wa-content').innerHTML = `
+      <div class="wa-disconnected">
+        <div class="qr-wrapper">
+          <img id="qr-img" src="" alt="QR Code" style="display:none;width:220px;height:220px;" />
+        </div>
+        <div class="qr-hint">Abra o WhatsApp no celular → Dispositivos conectados → Conectar um dispositivo</div>
+      </div>`;
+    updateQR();
+    if (!qrInterval) qrInterval = setInterval(updateQR, 3000);
+  }
+
+  function renderWAConnected(phone) {
+    clearInterval(qrInterval);
+    qrInterval = null;
+    document.getElementById('wa-content').innerHTML = `
+      <div class="wa-connected">
+        <div class="wa-phone">
+          <div class="wa-dot"></div>
+          <div>
+            <div class="wa-number">+${phone}</div>
+            <div class="wa-label">Conectado</div>
+          </div>
+        </div>
+        <button class="btn-danger" onclick="disconnectWA()">Desconectar</button>
+      </div>`;
+  }
+
+  function renderWAWaiting() {
+    document.getElementById('wa-content').innerHTML =
+      '<div class="wa-waiting">Aguardando inicialização do WhatsApp...</div>';
+  }
+
+  let lastWAStatus = null;
+
+  async function checkWAStatus() {
+    try {
+      const res = await authFetch('/api/whatsapp/status');
+      const data = await res.json();
+      const s = data.status;
+
+      if (s === 'connected') {
+        if (lastWAStatus !== 'connected') {
+          renderWAConnected(data.phone);
+          // Sync pode levar até 8s no servidor; recarrega grupos logo após conectar e de novo após 12s
+          loadGroups();
+          setTimeout(loadGroups, 12000);
+        }
+      } else if (s === 'qr_pending') {
+        if (lastWAStatus !== 'qr_pending') renderWADisconnected();
+      } else {
+        if (lastWAStatus !== s) renderWAWaiting();
+      }
+
+      lastWAStatus = s;
+    } catch {
+      renderWAWaiting();
+    }
+  }
+
+  async function disconnectWA() {
+    await authFetch('/api/whatsapp/disconnect', { method: 'POST' });
+    lastWAStatus = null;
+    checkWAStatus();
+  }
+
+  checkWAStatus();
+  setInterval(checkWAStatus, 4000);
+
+  // ─── Groups ─────────────────────────────────────────────────
+  async function loadGroups() {
+    try {
+      const res = await authFetch('/api/groups');
+      const data = await res.json();
+      const groups = data.groups || [];
+
+      const el = document.getElementById('groups-content');
+
+      if (groups.length === 0) {
+        el.innerHTML = '<div class="groups-empty">Nenhum grupo encontrado.</div>';
+        return;
+      }
+
+      el.innerHTML = '<div class="groups-list">' +
+        groups.map(g => `
+          <div class="group-item" id="group-${g.id}">
+            <div class="group-info">
+              <div class="group-name">${escHtml(g.name)}</div>
+              <div class="group-meta">${g.participant_count ?? 0} participantes</div>
+            </div>
+            <button
+              class="btn-toggle ${g.active ? 'active' : 'inactive'}"
+              onclick="toggleGroup('${g.id}', ${g.active})"
+            >${g.active ? 'Desativar' : 'Ativar'}</button>
+          </div>`).join('') +
+        '</div>';
+    } catch {
+      document.getElementById('groups-content').innerHTML =
+        '<div class="groups-empty">Erro ao carregar grupos.</div>';
+    }
+  }
+
+  function filterGroups() {
+    const q = document.getElementById('search-grupos').value.toLowerCase();
+    document.querySelectorAll('.group-item').forEach(el => {
+      const name = el.querySelector('.group-name').textContent.toLowerCase();
+      el.style.display = name.includes(q) ? '' : 'none';
+    });
+  }
+
+  async function toggleGroup(id, currentActive) {
+    const btn = document.querySelector(`#group-${id} .btn-toggle`);
+    if (btn) btn.disabled = true;
+
+    try {
+      const res = await authFetch(`/api/groups/${id}/toggle`, { method: 'PATCH' });
+      if (res.ok) await loadGroups();
+    } finally {
+      if (btn) btn.disabled = false;
+    }
+  }
+
+  function escHtml(str) {
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  loadGroups();
+  // Recarrega grupos a cada 15s para pegar sincronização pós-conexão
+  setInterval(loadGroups, 15000);
+
+  // ─── Messages ────────────────────────────────────────────────
+
+  const groupNameMap = {}; // group_id → name (cache para exibição na lista)
+
+  async function loadActiveGroups() {
+    const sel = document.getElementById('msg-group');
+    const prev = sel.value;
+    try {
+      const res = await authFetch('/api/groups');
+      const data = await res.json();
+      const active = (data.groups || []).filter(g => g.active);
+      // Atualiza cache de nomes (todos os grupos, não só ativos)
+      (data.groups || []).forEach(g => { groupNameMap[g.group_id] = g.name; });
+      if (active.length === 0) {
+        sel.innerHTML = '<option value="">Ative um grupo primeiro</option>';
+      } else {
+        sel.innerHTML = '<option value="">Selecione um grupo...</option>' +
+          active.map(g => `<option value="${g.group_id}" data-name="${escHtml(g.name)}">${escHtml(g.name)}</option>`).join('');
+        if (prev) sel.value = prev;
+      }
+    } catch {
+      sel.innerHTML = '<option value="">Erro ao carregar grupos</option>';
+    }
+  }
+
+  function toggleTipo(radio) {
+    document.getElementById('lbl-now').classList.toggle('checked', radio.value === 'now');
+    document.getElementById('lbl-schedule').classList.toggle('checked', radio.value === 'schedule');
+    const dt = document.getElementById('msg-datetime');
+    dt.style.display = radio.value === 'schedule' ? 'block' : 'none';
+    document.getElementById('btn-enviar').textContent = radio.value === 'schedule' ? 'Agendar' : 'Enviar';
+  }
+
+  async function enviarMensagem() {
+    const selEl     = document.getElementById('msg-group');
+    const groupId   = selEl.value;
+    const groupName = selEl.options[selEl.selectedIndex]?.dataset?.name || '';
+    const text      = document.getElementById('msg-text').value.trim();
+    const tipo      = document.querySelector('input[name="msg-tipo"]:checked').value;
+    const btn       = document.getElementById('btn-enviar');
+
+    if (!groupId) return alert('Selecione um grupo.');
+    if (!text)    return alert('Digite a mensagem.');
+
+    let scheduled_time = null;
+    if (tipo === 'schedule') {
+      const dtVal = document.getElementById('msg-datetime').value;
+      if (!dtVal) return alert('Informe a data e hora.');
+      scheduled_time = new Date(dtVal).toISOString();
+    }
+
+    btn.disabled = true;
+    try {
+      const res = await fetch('/api/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + localStorage.getItem('token')
+        },
+        body: JSON.stringify({ group_id: groupId, text }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert('Erro: ' + JSON.stringify(data));
+      } else {
+        alert('Enviado!');
+        document.getElementById('msg-text').value = '';
+        loadMessages();
+      }
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  async function loadMessages() {
+    const el = document.getElementById('messages-content');
+    try {
+      const res = await authFetch('/api/messages');
+      const data = await res.json();
+      const msgs = data.messages || [];
+
+      if (msgs.length === 0) {
+        el.innerHTML = '<div class="loading-text">Nenhuma mensagem ainda.</div>';
+        return;
+      }
+
+      el.innerHTML = '<div class="msg-list">' + msgs.map(m => {
+        const timeLabel = m.scheduled_time
+          ? new Date(m.scheduled_time).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
+          : 'Imediato';
+        const statusClass = m.sent ? 'enviado' : 'aguardando';
+        const statusLabel = m.sent ? 'Enviado' : 'Aguardando';
+        const cancelBtn   = m.sent ? '' :
+          `<button class="btn-cancel" onclick="cancelarMensagem('${m.id}')">✕ cancelar</button>`;
+        return `
+          <div class="msg-item" id="msg-${m.id}">
+            <div class="msg-item-top">
+              <span class="msg-group">${escHtml(m.group_name || groupNameMap[m.group_id] || m.group_id)}</span>
+              <span class="msg-status ${statusClass}">${statusLabel}</span>
+            </div>
+            <div class="msg-text">${escHtml(m.text)}</div>
+            <div class="msg-item-bottom">
+              <span class="msg-time">${timeLabel}</span>
+              ${cancelBtn}
+            </div>
+          </div>`;
+      }).join('') + '</div>';
+    } catch {
+      el.innerHTML = '<div class="loading-text">Erro ao carregar mensagens.</div>';
+    }
+  }
+
+  async function cancelarMensagem(id) {
+    if (!confirm('Cancelar esta mensagem?')) return;
+    const res = await authFetch(`/api/messages/${id}`, { method: 'DELETE' });
+    if (res.ok) loadMessages();
+    else alert('Erro ao cancelar.');
+  }
+
+  loadActiveGroups();
+  loadMessages();
+  setInterval(loadMessages, 15000);
+  setInterval(loadActiveGroups, 30000);
+</script>
+</body>
+</html>

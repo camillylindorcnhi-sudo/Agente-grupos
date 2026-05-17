@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Aquecedor — Login</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0d1117;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 40px 36px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    }
+
+    .logo {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .logo-icon {
+      width: 56px;
+      height: 56px;
+      background: #25D366;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      margin-bottom: 10px;
+    }
+
+    .logo h1 {
+      color: #e6edf3;
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    .logo p {
+      color: #8b949e;
+      font-size: 13px;
+      margin-top: 4px;
+    }
+
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid #30363d;
+      margin-bottom: 28px;
+    }
+
+    .tab {
+      flex: 1;
+      background: none;
+      border: none;
+      color: #8b949e;
+      font-size: 14px;
+      font-weight: 600;
+      padding: 10px 0;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+    }
+
+    .tab.active {
+      color: #25D366;
+      border-bottom-color: #25D366;
+    }
+
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    label {
+      display: block;
+      color: #c9d1d9;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px 14px;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      color: #e6edf3;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input:focus {
+      border-color: #25D366;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 11px;
+      background: #25D366;
+      color: #0d1117;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 6px;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    .btn:hover { background: #1ebe57; }
+    .btn:active { transform: scale(0.98); }
+    .btn:disabled { background: #1a7a41; cursor: not-allowed; opacity: 0.7; }
+
+    .msg {
+      margin-top: 14px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      text-align: center;
+      display: none;
+    }
+
+    .msg.error { background: #2d1b1b; color: #f85149; border: 1px solid #4a1f1f; }
+    .msg.success { background: #1a2e1a; color: #3fb950; border: 1px solid #1f4a1f; }
+    .msg.show { display: block; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">
+      <div class="logo-icon">🔥</div>
+      <h1>Aquecedor</h1>
+      <p>Gerencie seus grupos com facilidade</p>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" id="tab-login" onclick="switchTab('login')">Entrar</button>
+      <button class="tab" id="tab-register" onclick="switchTab('register')">Cadastrar</button>
+    </div>
+
+    <form id="form" onsubmit="handleSubmit(event)">
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input type="email" id="email" placeholder="seu@email.com" required />
+      </div>
+      <div class="form-group">
+        <label for="password">Senha</label>
+        <input type="password" id="password" placeholder="••••••••" required />
+      </div>
+      <button class="btn" type="submit" id="btn-submit">Entrar</button>
+    </form>
+
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <script>
+    let mode = 'login';
+
+    function switchTab(tab) {
+      mode = tab;
+      document.getElementById('tab-login').classList.toggle('active', tab === 'login');
+      document.getElementById('tab-register').classList.toggle('active', tab === 'register');
+      document.getElementById('btn-submit').textContent = tab === 'login' ? 'Entrar' : 'Criar conta';
+      showMsg('', '');
+    }
+
+    function showMsg(text, type) {
+      const el = document.getElementById('msg');
+      el.textContent = text;
+      el.className = 'msg' + (text ? ' show ' + type : '');
+    }
+
+    async function handleSubmit(e) {
+      e.preventDefault();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const btn = document.getElementById('btn-submit');
+
+      btn.disabled = true;
+      showMsg('', '');
+
+      const endpoint = mode === 'login' ? '/api/auth/login' : '/api/auth/register';
+
+      try {
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          showMsg(data.error || 'Erro inesperado.', 'error');
+          return;
+        }
+
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+
+        showMsg(mode === 'login' ? 'Login realizado! Redirecionando...' : 'Conta criada! Redirecionando...', 'success');
+
+        setTimeout(() => { window.location.href = '/dashboard'; }, 1000);
+      } catch {
+        showMsg('Erro de conexão com o servidor.', 'error');
+      } finally {
+        btn.disabled = false;
+      }
+    }
+  </script>
+</body>
+</html>

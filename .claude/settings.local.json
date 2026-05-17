@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install *)",
+      "Bash(node src/server.js)",
+      "Bash(Start-Sleep -Seconds 2)",
+      "Bash(Get-Content \"C:\\\\Users\\\\camil\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-camil-OneDrive-Desktop-aquecedor\\\\a9b4bef3-2b2e-407e-a964-cf48039512c4\\\\tasks\\\\b0zbtuws1.output\")",
+      "Bash(ping -n 3 127.0.0.1)",
+      "Bash(npx kill-port *)",
+      "Bash(node -e ' *)"
+    ]
+  }
+}
