@@ -1,3 +1,2 @@
-2026/05/17-21:22:50.398 6858 Reusing MANIFEST C:\Users\camil\OneDrive\Desktop\aquecedor\.wwebjs_auth\session-1c0d11ae-0026-4e88-821a-5fc598e3c24b\Default\Local Storage\leveldb/MANIFEST-000001
-2026/05/17-21:22:50.403 6858 Recovering log #3
-2026/05/17-21:22:50.405 6858 Reusing old log C:\Users\camil\OneDrive\Desktop\aquecedor\.wwebjs_auth\session-1c0d11ae-0026-4e88-821a-5fc598e3c24b\Default\Local Storage\leveldb/000003.log 
+2026/05/18-09:54:34.867 7a44 Creating DB C:\Users\camil\OneDrive\Desktop\aquecedor\.wwebjs_auth\session-1c0d11ae-0026-4e88-821a-5fc598e3c24b\Default\Local Storage\leveldb since it was missing.
+2026/05/18-09:54:34.887 7a44 Reusing MANIFEST C:\Users\camil\OneDrive\Desktop\aquecedor\.wwebjs_auth\session-1c0d11ae-0026-4e88-821a-5fc598e3c24b\Default\Local Storage\leveldb/MANIFEST-000001

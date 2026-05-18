@@ -22,6 +22,8 @@ const PUPPETEER_ARGS = [
 
 // sessions[userId] = { client, status, qr, phone }
 const sessions = {};
+// userIds em processo de limpeza — initSession não cria nova sessão enquanto limpa
+const cleaningUp = new Set();
 
 async function syncGroups(userId, client, attempt = 1) {
   console.log(`[WA:${userId}] Buscando grupos... (tentativa ${attempt})`);
@@ -41,7 +43,6 @@ async function syncGroups(userId, client, attempt = 1) {
       return;
     }
 
-    // Busca status active atual para não resetar grupos já ativados
     const { data: existing } = await supabase
       .from('groups')
       .select('group_id, active')
@@ -81,6 +82,11 @@ async function syncGroups(userId, client, attempt = 1) {
 
 function initSession(userId) {
   if (sessions[userId]) return sessions[userId];
+  // Bloqueia criação de nova sessão enquanto limpeza está em andamento
+  if (cleaningUp.has(userId)) {
+    console.log(`[WA:${userId}] initSession ignorado — limpeza em andamento.`);
+    return null;
+  }
 
   console.log(`[WA:${userId}] Iniciando sessão...`);
 
@@ -116,14 +122,21 @@ function initSession(userId) {
     console.error(`[WA:${userId}] STATUS → auth_failure:`, msg);
     session.status = 'disconnected';
     if (sessions[userId] !== session) return;
+    cleaningUp.add(userId);
     delete sessions[userId];
     const sessionPath = path.join(AUTH_DIR, `session-${userId}`);
-    if (fs.existsSync(sessionPath)) {
-      fs.rmSync(sessionPath, { recursive: true, force: true });
-      console.log(`[WA:${userId}] Credenciais inválidas removidas do disco.`);
-    }
-    console.log(`[WA:${userId}] Reiniciando sessão limpa em 3s...`);
-    setTimeout(() => initSession(userId), 3000);
+    // Aguarda Chrome liberar locks antes de deletar
+    setTimeout(() => {
+      try {
+        if (fs.existsSync(sessionPath)) {
+          fs.rmSync(sessionPath, { recursive: true, force: true });
+          console.log(`[WA:${userId}] Credenciais inválidas removidas do disco.`);
+        }
+      } catch (_) {}
+      cleaningUp.delete(userId);
+      console.log(`[WA:${userId}] Reiniciando sessão limpa...`);
+      initSession(userId);
+    }, 3000);
   });
 
   client.on('disconnected', (reason) => {
@@ -138,14 +151,39 @@ function initSession(userId) {
   client.initialize().catch(async (err) => {
     console.error(`[WA:${userId}] Falha ao inicializar:`, err.message);
     if (sessions[userId] !== session) return;
+    cleaningUp.add(userId);
     delete sessions[userId];
     const sessionPath = path.join(AUTH_DIR, `session-${userId}`);
-    if (fs.existsSync(sessionPath)) {
-      fs.rmSync(sessionPath, { recursive: true, force: true });
-      console.log(`[WA:${userId}] Sessão corrompida removida. Retry em 5s...`);
-    }
-    setTimeout(() => initSession(userId), 5000);
+    try {
+      if (fs.existsSync(sessionPath)) {
+        fs.rmSync(sessionPath, { recursive: true, force: true });
+        console.log(`[WA:${userId}] Sessão corrompida removida.`);
+      }
+    } catch (_) {}
+    setTimeout(() => {
+      cleaningUp.delete(userId);
+      initSession(userId);
+    }, 5000);
   });
+
+  // Se ainda estiver 'initializing' após 20s, sessão salva está inválida — limpa e gera QR novo
+  setTimeout(async () => {
+    if (sessions[userId] !== session || session.status !== 'initializing') return;
+    console.log(`[WA:${userId}] Timeout de inicialização. Limpando sessão antiga para gerar QR...`);
+    cleaningUp.add(userId);
+    delete sessions[userId];
+    try { await session.client.destroy(); } catch (_) {}
+    await new Promise(r => setTimeout(r, 3000));
+    const sessionPath = path.join(AUTH_DIR, `session-${userId}`);
+    try {
+      if (fs.existsSync(sessionPath)) {
+        fs.rmSync(sessionPath, { recursive: true, force: true });
+        console.log(`[WA:${userId}] Sessão antiga removida do disco.`);
+      }
+    } catch (_) {}
+    cleaningUp.delete(userId);
+    initSession(userId);
+  }, 20000);
 
   return session;
 }
@@ -168,11 +206,19 @@ function getClient(userId) {
 
 async function disconnect(userId) {
   const s = sessions[userId];
-  if (!s) return;
+  if (!s || cleaningUp.has(userId)) return;
+
+  // Marca limpeza ANTES de qualquer await para bloquear initSession do poll de status
+  cleaningUp.add(userId);
   const savedClient = s.client;
   delete sessions[userId];
+
   try { await savedClient.logout(); } catch (_) {}
   try { await savedClient.destroy(); } catch (_) {}
+
+  // Aguarda Chrome liberar locks de arquivo
+  await new Promise(r => setTimeout(r, 3000));
+
   const sessionPath = path.join(AUTH_DIR, `session-${userId}`);
   try {
     if (fs.existsSync(sessionPath)) {
@@ -182,8 +228,9 @@ async function disconnect(userId) {
   } catch (e) {
     console.warn(`[WA:${userId}] Não foi possível remover arquivos de sessão: ${e.message}`);
   }
-  console.log(`[WA:${userId}] Reiniciando sessão em 3s...`);
-  setTimeout(() => initSession(userId), 3000);
+
+  cleaningUp.delete(userId);
+  initSession(userId);
 }
 
 function clearSession(userId) {

@@ -1,3 +1,2 @@
-2026/05/17-21:22:50.450 8090 Reusing MANIFEST C:\Users\camil\OneDrive\Desktop\aquecedor\.wwebjs_auth\session-1c0d11ae-0026-4e88-821a-5fc598e3c24b\Default\shared_proto_db/MANIFEST-000001
-2026/05/17-21:22:50.451 8090 Recovering log #3
-2026/05/17-21:22:50.451 8090 Reusing old log C:\Users\camil\OneDrive\Desktop\aquecedor\.wwebjs_auth\session-1c0d11ae-0026-4e88-821a-5fc598e3c24b\Default\shared_proto_db/000003.log 
+2026/05/18-09:54:34.960 24bc Creating DB C:\Users\camil\OneDrive\Desktop\aquecedor\.wwebjs_auth\session-1c0d11ae-0026-4e88-821a-5fc598e3c24b\Default\shared_proto_db since it was missing.
+2026/05/18-09:54:34.971 24bc Reusing MANIFEST C:\Users\camil\OneDrive\Desktop\aquecedor\.wwebjs_auth\session-1c0d11ae-0026-4e88-821a-5fc598e3c24b\Default\shared_proto_db/MANIFEST-000001

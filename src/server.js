@@ -111,6 +111,20 @@ app.post('/api/messages', authenticateToken, upload.single('file'), async (req, 
       return res.status(400).json({ error: 'WhatsApp ainda não está pronto. Aguarde alguns segundos.' });
     }
     console.log(`[MSG] Conectado como: ${clientInfo.pushname} (${clientInfo.wid?.user})`);
+
+    // Verifica o estado real do WhatsApp Web (detecta sessão "fantasma")
+    try {
+      const waState = await client.getState();
+      console.log(`[MSG] WhatsApp Web state: ${waState}`);
+      if (waState !== 'CONNECTED') {
+        console.error(`[MSG] Estado inválido: ${waState} — sessão fantasma detectada.`);
+        return res.status(400).json({ error: `WhatsApp Web não está conectado (estado: ${waState}). Reconecte e tente novamente.` });
+      }
+    } catch (stateErr) {
+      console.error('[MSG] Não foi possível verificar estado do WhatsApp:', stateErr.message);
+      return res.status(400).json({ error: 'Não foi possível verificar a conexão WhatsApp. Reconecte e tente novamente.' });
+    }
+
     try {
       const waId = group_id.includes('@') ? group_id : `${group_id}@g.us`;
       console.log(`[MSG] waId: ${waId}`);
@@ -120,9 +134,11 @@ app.post('/api/messages', authenticateToken, upload.single('file'), async (req, 
         const sendOpts = isAudio ? { sendAudioAsVoice: true } : { caption: text || undefined };
         const sent = await client.sendMessage(waId, media, sendOpts);
         console.log(`[MSG] Mídia enviada para ${group_name || group_id}: ${req.file.originalname} | msgId: ${sent?.id?._serialized}`);
+        if (!sent?.id?._serialized) throw new Error('WhatsApp não retornou confirmação de envio da mídia.');
       } else {
         const sent = await client.sendMessage(waId, text);
         console.log(`[MSG] Enviada para ${group_name || group_id}: ${text.slice(0, 60)} | msgId: ${sent?.id?._serialized}`);
+        if (!sent?.id?._serialized) throw new Error('WhatsApp não retornou confirmação de envio.');
       }
     } catch (err) {
       console.error('[MSG] Erro ao enviar mensagem imediata:', err);
@@ -230,6 +246,17 @@ cron.schedule('*/30 * * * * *', async () => {
       console.error(`[CRON] WhatsApp não conectado para userId ${msg.user_id}, pulando mensagem ${msg.id}`);
       continue;
     }
+    // Verifica estado real antes de tentar enviar
+    try {
+      const waState = await client.getState();
+      if (waState !== 'CONNECTED') {
+        console.error(`[CRON] Estado WhatsApp inválido para userId ${msg.user_id}: ${waState}. Pulando msg ${msg.id}.`);
+        continue;
+      }
+    } catch (stateErr) {
+      console.error(`[CRON] Erro ao verificar estado para userId ${msg.user_id}:`, stateErr.message);
+      continue;
+    }
     try {
       const waId = msg.group_id.includes('@') ? msg.group_id : `${msg.group_id}@g.us`;
       console.log(`[CRON] Enviando msg ${msg.id} para waId: ${waId}`);
@@ -240,9 +267,11 @@ cron.schedule('*/30 * * * * *', async () => {
         const sendOpts = isAudio ? { sendAudioAsVoice: true } : { caption: msg.text || undefined };
         sent = await client.sendMessage(waId, media, sendOpts);
         console.log(`[CRON] Mídia enviada para ${msg.group_id}: ${msg.media_filename} | msgId: ${sent?.id?._serialized}`);
+        if (!sent?.id?._serialized) throw new Error('Sem confirmação de envio da mídia.');
       } else {
         sent = await client.sendMessage(waId, msg.text);
         console.log(`[CRON] Enviada para ${msg.group_id}: ${msg.text?.slice(0, 60)} | msgId: ${sent?.id?._serialized}`);
+        if (!sent?.id?._serialized) throw new Error('Sem confirmação de envio.');
       }
       await supabase.from('messages').update({ sent: true }).eq('id', msg.id);
     } catch (err) {

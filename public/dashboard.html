@@ -734,10 +734,6 @@
 
     const file = document.getElementById('msg-file').files[0];
 
-    if (file && tipo === 'schedule') {
-      return alert('Anexos não são suportados em mensagens agendadas. Remova o arquivo ou escolha "Enviar agora".');
-    }
-
     btn.disabled = true;
     try {
       let body, headers;
