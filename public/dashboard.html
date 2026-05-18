@@ -619,6 +619,7 @@
   async function loadGroups() {
     try {
       const res = await authFetch('/api/groups');
+      if (!res.ok) throw new Error('Erro ' + res.status);
       const data = await res.json();
       const groups = data.groups || [];
 
@@ -662,7 +663,10 @@
 
     try {
       const res = await authFetch(`/api/groups/${id}/toggle`, { method: 'PATCH' });
-      if (res.ok) await loadGroups();
+      if (res.ok) {
+        await loadGroups();
+        await loadActiveGroups();
+      }
     } finally {
       if (btn) btn.disabled = false;
     }
@@ -685,6 +689,7 @@
     const prev = sel.value;
     try {
       const res = await authFetch('/api/groups');
+      if (!res.ok) throw new Error('Erro ' + res.status);
       const data = await res.json();
       const active = (data.groups || []).filter(g => g.active);
       // Atualiza cache de nomes (todos os grupos, não só ativos)

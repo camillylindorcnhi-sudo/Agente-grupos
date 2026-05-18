@@ -105,17 +105,24 @@ app.post('/api/messages', authenticateToken, upload.single('file'), async (req, 
       console.error('[MSG] Erro: WhatsApp não conectado. Status:', waStatus.status);
       return res.status(400).json({ error: 'WhatsApp não conectado. Status: ' + waStatus.status });
     }
+    const clientInfo = client.info;
+    if (!clientInfo) {
+      console.error('[MSG] client.info é null — sessão não está totalmente ativa');
+      return res.status(400).json({ error: 'WhatsApp ainda não está pronto. Aguarde alguns segundos.' });
+    }
+    console.log(`[MSG] Conectado como: ${clientInfo.pushname} (${clientInfo.wid?.user})`);
     try {
       const waId = group_id.includes('@') ? group_id : `${group_id}@g.us`;
+      console.log(`[MSG] waId: ${waId}`);
       if (req.file) {
         const media = new MessageMedia(req.file.mimetype, req.file.buffer.toString('base64'), req.file.originalname);
         const isAudio = req.file.mimetype.startsWith('audio/');
         const sendOpts = isAudio ? { sendAudioAsVoice: true } : { caption: text || undefined };
-        await client.sendMessage(waId, media, sendOpts);
-        console.log(`[MSG] Mídia enviada para ${group_name || group_id}: ${req.file.originalname}`);
+        const sent = await client.sendMessage(waId, media, sendOpts);
+        console.log(`[MSG] Mídia enviada para ${group_name || group_id}: ${req.file.originalname} | msgId: ${sent?.id?._serialized}`);
       } else {
-        await client.sendMessage(waId, text);
-        console.log(`[MSG] Enviada para ${group_name || group_id}: ${text.slice(0, 60)}`);
+        const sent = await client.sendMessage(waId, text);
+        console.log(`[MSG] Enviada para ${group_name || group_id}: ${text.slice(0, 60)} | msgId: ${sent?.id?._serialized}`);
       }
     } catch (err) {
       console.error('[MSG] Erro ao enviar mensagem imediata:', err);
@@ -130,13 +137,26 @@ app.post('/api/messages', authenticateToken, upload.single('file'), async (req, 
   }
 
   // Envio agendado — salva como sent=false, cron processa depois
+  const mediaData     = req.file ? req.file.buffer.toString('base64') : null;
+  const mediaMimetype = req.file ? req.file.mimetype : null;
+  const mediaFilename = req.file ? req.file.originalname : null;
+
   const { data, error } = await supabase
     .from('messages')
-    .insert([{ user_id: req.user.id, group_id, text, scheduled_time, sent: false }])
+    .insert([{
+      user_id: req.user.id,
+      group_id,
+      text: text || req.file?.originalname,
+      scheduled_time,
+      sent: false,
+      media_data: mediaData,
+      media_mimetype: mediaMimetype,
+      media_filename: mediaFilename,
+    }])
     .select().single();
 
   if (error) { console.error('[MSG] Erro Supabase completo:', JSON.stringify(error)); return res.status(500).json({ error: error.message || JSON.stringify(error) }); }
-  console.log(`[MSG] Agendada para ${group_name || group_id} em ${scheduled_time}: ${text.slice(0, 60)}`);
+  console.log(`[MSG] Agendada para ${group_name || group_id} em ${scheduled_time}: ${(text || '').slice(0, 60)}`);
   res.status(201).json({ message: data });
 });
 
@@ -178,8 +198,13 @@ app.get('/dashboard', (req, res) => {
 
 // ─── Boot ─────────────────────────────────────────────────────
 
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`Servidor rodando em http://localhost:${PORT}`);
+  const { data: users } = await supabase.from('users').select('id');
+  if (users?.length) {
+    console.log(`[BOOT] Iniciando sessão WhatsApp para ${users.length} usuário(s)...`);
+    users.forEach(u => whatsapp.initSession(u.id));
+  }
 });
 
 // ─── Cron: disparo de mensagens a cada 30s ───────────────────
@@ -207,9 +232,19 @@ cron.schedule('*/30 * * * * *', async () => {
     }
     try {
       const waId = msg.group_id.includes('@') ? msg.group_id : `${msg.group_id}@g.us`;
-      await client.sendMessage(waId, msg.text);
+      console.log(`[CRON] Enviando msg ${msg.id} para waId: ${waId}`);
+      let sent;
+      if (msg.media_data) {
+        const media = new MessageMedia(msg.media_mimetype, msg.media_data, msg.media_filename);
+        const isAudio = msg.media_mimetype?.startsWith('audio/');
+        const sendOpts = isAudio ? { sendAudioAsVoice: true } : { caption: msg.text || undefined };
+        sent = await client.sendMessage(waId, media, sendOpts);
+        console.log(`[CRON] Mídia enviada para ${msg.group_id}: ${msg.media_filename} | msgId: ${sent?.id?._serialized}`);
+      } else {
+        sent = await client.sendMessage(waId, msg.text);
+        console.log(`[CRON] Enviada para ${msg.group_id}: ${msg.text?.slice(0, 60)} | msgId: ${sent?.id?._serialized}`);
+      }
       await supabase.from('messages').update({ sent: true }).eq('id', msg.id);
-      console.log(`[MSG] Enviada para ${msg.group_id}: ${msg.text.slice(0, 60)}`);
     } catch (err) {
       console.error(`[CRON] Falha ao enviar mensagem ${msg.id}:`, err);
     }

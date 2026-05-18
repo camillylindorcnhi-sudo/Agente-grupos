@@ -33,7 +33,10 @@ async function syncGroups(userId, client, attempt = 1) {
     if (groups.length === 0) {
       if (attempt < 4) {
         console.log(`[WA:${userId}] Nenhum grupo. Retry em 10s...`);
-        setTimeout(() => syncGroups(userId, client, attempt + 1), 10000);
+        setTimeout(() => {
+          const cur = sessions[userId]?.client;
+          if (cur) syncGroups(userId, cur, attempt + 1);
+        }, 10000);
       }
       return;
     }
@@ -68,7 +71,10 @@ async function syncGroups(userId, client, attempt = 1) {
     console.error(`[WA:${userId}] Erro em syncGroups:`, err.message);
     if (attempt < 4) {
       console.log(`[WA:${userId}] Retry syncGroups em 10s...`);
-      setTimeout(() => syncGroups(userId, client, attempt + 1), 10000);
+      setTimeout(() => {
+        const cur = sessions[userId]?.client;
+        if (cur) syncGroups(userId, cur, attempt + 1);
+      }, 10000);
     }
   }
 }
@@ -109,7 +115,15 @@ function initSession(userId) {
   client.on('auth_failure', (msg) => {
     console.error(`[WA:${userId}] STATUS → auth_failure:`, msg);
     session.status = 'disconnected';
+    if (sessions[userId] !== session) return;
     delete sessions[userId];
+    const sessionPath = path.join(AUTH_DIR, `session-${userId}`);
+    if (fs.existsSync(sessionPath)) {
+      fs.rmSync(sessionPath, { recursive: true, force: true });
+      console.log(`[WA:${userId}] Credenciais inválidas removidas do disco.`);
+    }
+    console.log(`[WA:${userId}] Reiniciando sessão limpa em 3s...`);
+    setTimeout(() => initSession(userId), 3000);
   });
 
   client.on('disconnected', (reason) => {
@@ -117,11 +131,13 @@ function initSession(userId) {
     session.status = 'disconnected';
     session.qr = null;
     session.phone = null;
+    if (sessions[userId] !== session) return;
     delete sessions[userId];
   });
 
   client.initialize().catch(async (err) => {
     console.error(`[WA:${userId}] Falha ao inicializar:`, err.message);
+    if (sessions[userId] !== session) return;
     delete sessions[userId];
     const sessionPath = path.join(AUTH_DIR, `session-${userId}`);
     if (fs.existsSync(sessionPath)) {
@@ -153,13 +169,34 @@ function getClient(userId) {
 async function disconnect(userId) {
   const s = sessions[userId];
   if (!s) return;
-  try { await s.client.logout(); } catch (_) {}
+  const savedClient = s.client;
   delete sessions[userId];
+  try { await savedClient.logout(); } catch (_) {}
+  try { await savedClient.destroy(); } catch (_) {}
+  const sessionPath = path.join(AUTH_DIR, `session-${userId}`);
+  try {
+    if (fs.existsSync(sessionPath)) {
+      fs.rmSync(sessionPath, { recursive: true, force: true });
+      console.log(`[WA:${userId}] Sessão removida.`);
+    }
+  } catch (e) {
+    console.warn(`[WA:${userId}] Não foi possível remover arquivos de sessão: ${e.message}`);
+  }
+  console.log(`[WA:${userId}] Reiniciando sessão em 3s...`);
+  setTimeout(() => initSession(userId), 3000);
+}
+
+function clearSession(userId) {
+  const s = sessions[userId];
+  if (s) {
+    try { s.client.destroy(); } catch (_) {}
+    delete sessions[userId];
+  }
   const sessionPath = path.join(AUTH_DIR, `session-${userId}`);
   if (fs.existsSync(sessionPath)) {
     fs.rmSync(sessionPath, { recursive: true, force: true });
-    console.log(`[WA:${userId}] Sessão removida.`);
+    console.log(`[WA:${userId}] Sessão limpa do disco.`);
   }
 }
 
-module.exports = { initSession, getStatus, getQR, getClient, disconnect };
+module.exports = { initSession, getStatus, getQR, getClient, disconnect, clearSession };
