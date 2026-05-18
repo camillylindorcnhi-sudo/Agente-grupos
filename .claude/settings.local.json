@@ -21,7 +21,9 @@
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
       "Bash(git push *)",
-      "Bash(xargs -I{} sh -c 'echo \"=== {} ===\" && git show {}:src/server.js 2>/dev/null | grep -c \"gsk_tSt38\"')"
+      "Bash(xargs -I{} sh -c 'echo \"=== {} ===\" && git show {}:src/server.js 2>/dev/null | grep -c \"gsk_tSt38\"')",
+      "Bash(git reflog *)",
+      "Bash(git gc *)"
     ]
   }
 }
