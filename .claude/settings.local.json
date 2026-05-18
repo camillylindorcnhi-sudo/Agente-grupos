@@ -7,7 +7,21 @@
       "Bash(Get-Content \"C:\\\\Users\\\\camil\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-camil-OneDrive-Desktop-aquecedor\\\\a9b4bef3-2b2e-407e-a964-cf48039512c4\\\\tasks\\\\b0zbtuws1.output\")",
       "Bash(ping -n 3 127.0.0.1)",
       "Bash(npx kill-port *)",
-      "Bash(node -e ' *)"
+      "Bash(node -e ' *)",
+      "Bash(git filter-repo *)",
+      "Bash(pip install *)",
+      "Bash(pip3 install *)",
+      "Bash(python -m pip install git-filter-repo)",
+      "Bash(python3 -m pip install git-filter-repo)",
+      "PowerShell(pip install *)",
+      "Bash(FILTER_BRANCH_SQUELCH_WARNING=1 git filter-branch --force --tree-filter \"node \\\\\"$\\(pwd\\)/.git/replace_key.js\\\\\"\" --tag-name-filter cat -- --all)",
+      "Bash(echo \"exit: $?\")",
+      "Bash(git stash *)",
+      "Bash(git rm *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(xargs -I{} sh -c 'echo \"=== {} ===\" && git show {}:src/server.js 2>/dev/null | grep -c \"gsk_tSt38\"')"
     ]
   }
 }
