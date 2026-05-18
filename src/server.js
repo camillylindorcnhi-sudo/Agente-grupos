@@ -212,6 +212,109 @@ app.get('/dashboard', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'dashboard.html'));
 });
 
+// ─── IA ──────────────────────────────────────────────────────
+
+app.post('/api/ia/gerar', authenticateToken, async (req, res) => {
+  const { descricao, quantidade, dias } = req.body;
+  if (!descricao || !quantidade || !dias)
+    return res.status(400).json({ error: 'Parâmetros obrigatórios: descricao, quantidade, dias.' });
+
+  const https = require('https');
+  const groqKey = process.env.GROQ_API_KEY;
+  const qtd = parseInt(quantidade);
+  const numDias = parseInt(dias);
+
+  const amanha = new Date();
+  amanha.setDate(amanha.getDate() + 1);
+  const dataInicio = amanha.toISOString().slice(0, 10);
+
+  const prompt = `Você é um especialista em copywriting e persuasão para agências de marketing digital.
+
+Crie exatamente ${qtd} mensagens de WhatsApp para uma sequência de aquecimento de lançamento com a seguinte descrição: "${descricao}"
+
+Regras obrigatórias:
+- Distribua em 3 fases:
+  * Fase 1 (primeiros 30%): foco em curiosidade e dor do cliente
+  * Fase 2 (40% do meio): prova social e autoridade
+  * Fase 3 (últimos 30%): urgência, escassez e CTA direto
+- Cada mensagem deve ser um texto persuasivo completo com no mínimo 5 parágrafos curtos separados por quebra de linha, com mínimo 150 palavras — NUNCA uma frase ou linha só
+- Use storytelling (comece com uma história ou situação real), gatilhos mentais (escassez, prova social, autoridade, urgência) e encerre com um CTA direto e imperativo no último parágrafo
+- Cada parágrafo com tom urgente e direto, sem enrolação
+- Cada mensagem completamente diferente da anterior: abordagem, estrutura e ângulo distintos
+- No máximo 2 emojis por mensagem
+- Horários APENAS entre 07:00 e 09:00 ou entre 19:00 e 21:00 (horário de Brasília, UTC-3)
+- Nunca dois horários iguais
+- Concentre mais mensagens nos últimos 2 dias do período
+- Período: ${numDias} dias a partir de ${dataInicio}
+
+Responda APENAS com JSON válido, sem markdown, sem texto antes ou depois:
+[{"texto":"...","horario":"YYYY-MM-DDTHH:MM:00-03:00"},...]`;
+
+  try {
+    const groqBody = JSON.stringify({
+      model: 'llama-3.3-70b-versatile',
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0.8,
+      max_tokens: 8000,
+    });
+
+    const groqRes = await new Promise((resolve, reject) => {
+      const options = {
+        hostname: 'api.groq.com',
+        path: '/openai/v1/chat/completions',
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${groqKey}`,
+          'Content-Type': 'application/json',
+          'Content-Length': Buffer.byteLength(groqBody),
+        },
+      };
+      const r = https.request(options, resp => {
+        let raw = '';
+        resp.on('data', c => { raw += c; });
+        resp.on('end', () => {
+          try { resolve(JSON.parse(raw)); } catch (e) { reject(new Error('Resposta inválida do Groq: ' + raw.slice(0, 200))); }
+        });
+      });
+      r.on('error', reject);
+      r.write(groqBody);
+      r.end();
+    });
+
+    if (groqRes.error) {
+      console.error('[IA] Erro Groq:', groqRes.error);
+      return res.status(500).json({ error: 'Erro da API Groq: ' + groqRes.error.message });
+    }
+
+    const content = groqRes.choices?.[0]?.message?.content;
+    if (!content) {
+      console.error('[IA] Sem conteúdo na resposta:', JSON.stringify(groqRes));
+      return res.status(500).json({ error: 'Sem conteúdo na resposta da IA.' });
+    }
+
+    const jsonMatch = content.match(/\[[\s\S]*\]/);
+    if (!jsonMatch) {
+      console.error('[IA] JSON não encontrado na resposta:', content.slice(0, 300));
+      return res.status(500).json({ error: 'IA não retornou formato JSON válido.' });
+    }
+
+    let mensagens;
+    try { mensagens = JSON.parse(jsonMatch[0]); } catch (e) {
+      console.error('[IA] Erro ao parsear JSON:', e.message);
+      return res.status(500).json({ error: 'Erro ao interpretar resposta da IA.' });
+    }
+
+    if (!Array.isArray(mensagens) || mensagens.length === 0)
+      return res.status(500).json({ error: 'IA retornou lista vazia.' });
+
+    console.log(`[IA] ${mensagens.length} mensagens geradas para userId ${req.user.id}`);
+    res.json({ mensagens });
+  } catch (err) {
+    console.error('[IA] Erro:', err.message);
+    res.status(500).json({ error: 'Erro ao gerar mensagens: ' + err.message });
+  }
+});
+
 // ─── Boot ─────────────────────────────────────────────────────
 
 app.listen(PORT, async () => {

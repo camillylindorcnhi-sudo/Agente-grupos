@@ -420,6 +420,160 @@
 
     .btn-cancel:hover { color: #f85149; }
   </style>
+
+  <style>
+    /* ─── Tab Nav ─────────────────────────────────────────────── */
+    .tab-nav {
+      background: #161b22;
+      border-bottom: 1px solid #30363d;
+      display: flex;
+      padding: 0 32px;
+      gap: 4px;
+    }
+    .tab-btn {
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: #8b949e;
+      padding: 12px 20px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: color 0.2s, border-color 0.2s;
+    }
+    .tab-btn:hover { color: #e6edf3; }
+    .tab-btn.tab-active { color: #25D366; border-bottom-color: #25D366; }
+
+    /* ─── IA Tab ───────────────────────────────────────────────── */
+    #tab-ia {
+      max-width: 860px;
+      margin: 36px auto;
+      padding: 0 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+    .ia-form { display: flex; flex-direction: column; gap: 12px; }
+    .ia-form select,
+    .ia-form textarea,
+    .ia-form input[type="number"] {
+      width: 100%;
+      padding: 10px 14px;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      color: #e6edf3;
+      font-size: 14px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .ia-form select:focus,
+    .ia-form textarea:focus,
+    .ia-form input[type="number"]:focus { border-color: #25D366; }
+    .ia-form select option { background: #161b22; }
+    .ia-form textarea { resize: vertical; min-height: 88px; }
+    .ia-nums { display: flex; gap: 12px; }
+    .ia-nums label { display: flex; flex-direction: column; gap: 6px; flex: 1; font-size: 12px; color: #8b949e; }
+    .ia-cards { display: flex; flex-direction: column; gap: 12px; }
+    .ia-card {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      padding: 16px;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 10px;
+    }
+    .ia-card input[type="checkbox"] {
+      margin-top: 4px;
+      width: 16px;
+      height: 16px;
+      accent-color: #25D366;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .ia-card-body { display: flex; flex-direction: column; gap: 8px; flex: 1; }
+    .ia-card-num { font-size: 11px; color: #8b949e; }
+    .ia-card textarea {
+      width: 100%;
+      padding: 8px 12px;
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      color: #e6edf3;
+      font-size: 13px;
+      font-family: inherit;
+      resize: vertical;
+      min-height: 64px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .ia-card textarea:focus { border-color: #25D366; }
+    .ia-card input[type="datetime-local"] {
+      padding: 7px 12px;
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      color: #e6edf3;
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .ia-card input[type="datetime-local"]:focus { border-color: #25D366; }
+    .ia-card-attach { margin-top: 4px; }
+    .btn-ia-attach {
+      background: none;
+      border: 1px solid #30363d;
+      color: #8b949e;
+      padding: 5px 14px;
+      border-radius: 8px;
+      font-size: 12px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .btn-ia-attach:hover { border-color: #25D366; color: #25D366; }
+    .ia-img-preview {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      margin-top: 8px;
+      padding: 8px 10px;
+      background: #1c2128;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+    }
+    .ia-img-preview img {
+      max-height: 120px;
+      max-width: 120px;
+      border-radius: 6px;
+      border: 1px solid #30363d;
+      display: block;
+      flex-shrink: 0;
+    }
+    .ia-img-name {
+      flex: 1;
+      font-size: 12px;
+      color: #8b949e;
+      word-break: break-all;
+    }
+    .btn-ia-remove-img {
+      background: none;
+      border: 1px solid #f85149;
+      color: #f85149;
+      padding: 4px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      font-family: inherit;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .btn-ia-remove-img:hover { background: rgba(248,81,73,0.1); }
+  </style>
 </head>
 <body>
 
@@ -433,6 +587,11 @@
     <button class="btn-logout" onclick="logout()">Sair</button>
   </div>
 </header>
+
+<nav class="tab-nav">
+  <button class="tab-btn tab-active" id="btn-tab-principal" onclick="switchTab('principal')">Principal</button>
+  <button class="tab-btn" id="btn-tab-ia" onclick="switchTab('ia')">✨ IA</button>
+</nav>
 
 <main>
   <!-- WhatsApp -->
@@ -492,6 +651,39 @@
     </div>
   </div>
 </main>
+
+<div id="tab-ia" style="display:none">
+  <!-- Gerador -->
+  <div class="section">
+    <div class="section-title">Gerador de Sequência IA</div>
+    <div class="ia-form">
+      <select id="ia-group">
+        <option value="">Carregando grupos...</option>
+      </select>
+      <textarea id="ia-descricao" placeholder="Descreva o lançamento: produto, público-alvo, benefício principal, data de abertura..."></textarea>
+      <div class="ia-nums">
+        <label>
+          Quantidade de mensagens
+          <input type="number" id="ia-quantidade" value="7" min="3" max="20" />
+        </label>
+        <label>
+          Período (dias)
+          <input type="number" id="ia-dias" value="3" min="1" max="30" />
+        </label>
+      </div>
+      <button class="btn-primary" id="btn-ia-gerar" onclick="iaGerar()">✨ Gerar Sequência</button>
+    </div>
+  </div>
+
+  <!-- Resultado -->
+  <div class="section" id="ia-resultado-section" style="display:none">
+    <div class="section-title">Sequência Gerada</div>
+    <div id="ia-cards" class="ia-cards"></div>
+    <div style="margin-top:16px">
+      <button class="btn-primary" id="btn-ia-agendar" onclick="iaAgendar()">Agendar Selecionadas</button>
+    </div>
+  </div>
+</div>
 
 <script>
   const token = localStorage.getItem('token');
@@ -813,6 +1005,163 @@
   loadMessages();
   setInterval(loadMessages, 15000);
   setInterval(loadActiveGroups, 30000);
+
+  // ─── IA Tab ──────────────────────────────────────────────────
+
+  function switchTab(tab) {
+    const isPrincipal = tab === 'principal';
+    document.querySelector('main').style.display = isPrincipal ? '' : 'none';
+    document.getElementById('tab-ia').style.display = isPrincipal ? 'none' : '';
+    document.getElementById('btn-tab-principal').classList.toggle('tab-active', isPrincipal);
+    document.getElementById('btn-tab-ia').classList.toggle('tab-active', !isPrincipal);
+    if (!isPrincipal) iaLoadGroups();
+  }
+
+  async function iaLoadGroups() {
+    const sel = document.getElementById('ia-group');
+    try {
+      const res = await authFetch('/api/groups');
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      const groups = data.groups || [];
+      if (groups.length === 0) {
+        sel.innerHTML = '<option value="">Nenhum grupo disponível</option>';
+      } else {
+        sel.innerHTML = '<option value="">Selecione o grupo...</option>' +
+          groups.map(g => `<option value="${g.group_id}" data-name="${escHtml(g.name)}">${escHtml(g.name)}</option>`).join('');
+      }
+    } catch {
+      sel.innerHTML = '<option value="">Erro ao carregar grupos</option>';
+    }
+  }
+
+  async function iaGerar() {
+    const descricao = document.getElementById('ia-descricao').value.trim();
+    const quantidade = document.getElementById('ia-quantidade').value;
+    const dias = document.getElementById('ia-dias').value;
+    const btn = document.getElementById('btn-ia-gerar');
+
+    if (!descricao) return alert('Descreva o lançamento antes de gerar.');
+
+    btn.disabled = true;
+    btn.textContent = 'Gerando...';
+    document.getElementById('ia-resultado-section').style.display = 'none';
+
+    try {
+      const res = await authFetch('/api/ia/gerar', {
+        method: 'POST',
+        body: JSON.stringify({ descricao, quantidade, dias }),
+      });
+      const data = await res.json();
+      if (!res.ok) return alert('Erro: ' + (data.error || 'Falha ao gerar.'));
+      iaRenderCards(data.mensagens);
+      document.getElementById('ia-resultado-section').style.display = '';
+    } catch {
+      alert('Erro ao conectar com o servidor.');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '✨ Gerar Sequência';
+    }
+  }
+
+  function iaRenderCards(mensagens) {
+    const container = document.getElementById('ia-cards');
+    container.innerHTML = mensagens.map((m, i) => {
+      const dtLocal = m.horario
+        ? new Date(m.horario).toLocaleString('sv-SE', { timeZone: 'America/Sao_Paulo' }).slice(0, 16)
+        : '';
+      return `
+        <div class="ia-card">
+          <input type="checkbox" checked id="ia-check-${i}" />
+          <div class="ia-card-body">
+            <div class="ia-card-num">Mensagem ${i + 1}</div>
+            <textarea id="ia-texto-${i}">${escHtml(m.texto)}</textarea>
+            <input type="datetime-local" id="ia-horario-${i}" value="${dtLocal}" />
+            <div class="ia-card-attach">
+              <input type="file" accept="image/*" id="ia-img-${i}" style="display:none" onchange="iaPreviewImg(${i}, this)">
+              <button class="btn-ia-attach" type="button" onclick="document.getElementById('ia-img-${i}').click()">📎 Anexar imagem</button>
+            </div>
+            <div class="ia-img-preview" id="ia-img-preview-${i}">
+              <img id="ia-img-thumb-${i}" src="" alt="preview" />
+              <span class="ia-img-name" id="ia-img-name-${i}"></span>
+              <button class="btn-ia-remove-img" type="button" onclick="iaRemoveImg(${i})">✕ Remover</button>
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  async function iaAgendar() {
+    const selEl = document.getElementById('ia-group');
+    const groupId = selEl.value;
+    const groupName = selEl.options[selEl.selectedIndex]?.dataset?.name || '';
+    if (!groupId) return alert('Selecione um grupo antes de agendar.');
+
+    const total = document.querySelectorAll('#ia-cards .ia-card').length;
+    const selecionadas = [];
+    for (let i = 0; i < total; i++) {
+      if (!document.getElementById(`ia-check-${i}`)?.checked) continue;
+      const texto = document.getElementById(`ia-texto-${i}`)?.value.trim();
+      const horarioLocal = document.getElementById(`ia-horario-${i}`)?.value;
+      if (texto && horarioLocal) selecionadas.push({ texto, horario: new Date(horarioLocal).toISOString(), idx: i });
+    }
+
+    if (selecionadas.length === 0) return alert('Selecione pelo menos uma mensagem.');
+
+    const btn = document.getElementById('btn-ia-agendar');
+    btn.disabled = true;
+    let ok = 0, erros = 0;
+
+    for (let j = 0; j < selecionadas.length; j++) {
+      btn.textContent = `Agendando ${j + 1}/${selecionadas.length}...`;
+      const { texto, horario, idx } = selecionadas[j];
+      const imgFile = document.getElementById(`ia-img-${idx}`)?.files[0];
+      try {
+        let fetchOpts;
+        if (imgFile) {
+          const fd = new FormData();
+          fd.append('group_id', groupId);
+          fd.append('group_name', groupName);
+          fd.append('text', texto);
+          fd.append('scheduled_time', horario);
+          fd.append('file', imgFile);
+          fetchOpts = { method: 'POST', headers: { 'Authorization': 'Bearer ' + token }, body: fd };
+        } else {
+          fetchOpts = { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify({ group_id: groupId, group_name: groupName, text: texto, scheduled_time: horario }) };
+        }
+        const res = await fetch('/api/messages', fetchOpts);
+        if (res.ok) ok++; else erros++;
+      } catch { erros++; }
+    }
+
+    btn.disabled = false;
+    btn.textContent = 'Agendar Selecionadas';
+    alert(`${ok} mensagem(ns) agendada(s)${erros > 0 ? `, ${erros} com erro.` : '!'}`);
+    if (ok > 0) { switchTab('principal'); loadMessages(); }
+  }
+
+  function iaPreviewImg(i, input) {
+    const file = input.files[0];
+    if (!file) return;
+    const preview = document.getElementById(`ia-img-preview-${i}`);
+    const thumb   = document.getElementById(`ia-img-thumb-${i}`);
+    const name    = document.getElementById(`ia-img-name-${i}`);
+    if (!preview || !thumb) return;
+    thumb.src = URL.createObjectURL(file);
+    if (name) name.textContent = file.name;
+    preview.style.display = 'flex';
+  }
+
+  function iaRemoveImg(i) {
+    const input   = document.getElementById(`ia-img-${i}`);
+    const preview = document.getElementById(`ia-img-preview-${i}`);
+    const thumb   = document.getElementById(`ia-img-thumb-${i}`);
+    const name    = document.getElementById(`ia-img-name-${i}`);
+    if (input)   input.value = '';
+    if (thumb)   thumb.src = '';
+    if (name)    name.textContent = '';
+    if (preview) preview.style.display = 'none';
+  }
 </script>
 </body>
 </html>
